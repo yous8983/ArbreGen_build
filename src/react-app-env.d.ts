@@ -1,5 +1,8 @@
 /// <reference types="react-scripts" />
-declare module '*.css' { const c: any; export default c; }
+
+// Suppress Ionic web component JSX type errors
 declare namespace JSX {
-  interface IntrinsicElements { [e: string]: any; }
+  interface IntrinsicElements {
+    [elemName: string]: any;
+  }
 }
