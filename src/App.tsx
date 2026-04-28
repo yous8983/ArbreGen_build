@@ -3,20 +3,16 @@ import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, IonLabel, Io
 import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router-dom';
 import { homeOutline } from 'ionicons/icons';
-import '@ionic/react/css/core.css';
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+import { defineCustomElements } from '@ionic/core/loader';
 import './theme/variables.css';
 import { HomePage } from './pages/HomePage';
+
+defineCustomElements(window);
 setupIonicReact({ mode: 'ios' });
+
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
-      {/* @ts-ignore */}
       <IonTabs>
         <IonRouterOutlet>
           <Route exact path="/home" component={HomePage} />
@@ -24,7 +20,8 @@ const App: React.FC = () => (
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="home" href="/home">
-            <IonIcon icon={homeOutline} /><IonLabel>Accueil</IonLabel>
+            <IonIcon icon={homeOutline} />
+            <IonLabel>Accueil</IonLabel>
           </IonTabButton>
         </IonTabBar>
       </IonTabs>
