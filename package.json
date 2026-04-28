@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
-    "ionic:build": "CI=false react-scripts build",
+    "build": "react-scripts build",
+    "ionic:build": "react-scripts build",
     "ionic:serve": "react-scripts start"
   },
   "dependencies": {
