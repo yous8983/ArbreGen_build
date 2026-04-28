@@ -1,32 +1,36 @@
 import React from 'react';
-import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, IonLabel, IonIcon, setupIonicReact } from '@ionic/react';
+import {
+  IonApp, IonRouterOutlet, IonTabBar,
+  IonTabButton, IonTabs, IonLabel,
+  IonIcon, setupIonicReact,
+} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router-dom';
 import { homeOutline } from 'ionicons/icons';
+import '@ionic/react/css/core.css';
+import '@ionic/react/css/normalize.css';
+import '@ionic/react/css/structure.css';
+import '@ionic/react/css/typography.css';
 import './theme/variables.css';
 import { HomePage } from './pages/HomePage';
 
 setupIonicReact({ mode: 'ios' });
 
-const Tab1: React.FC = () => <IonTabButton tab="home" href="/home">
-  <IonIcon icon={homeOutline} />
-  <IonLabel>Accueil</IonLabel>
-</IonTabButton>;
-
 const App: React.FC = () => (
   <IonApp>
-    {/* @ts-ignore */}
     <IonReactRouter>
-      {/* @ts-ignore */}
       <IonTabs>
         <IonRouterOutlet>
           <Route exact path="/home" component={HomePage} />
-          <Route exact path="/" render={() => <Redirect to="/home" />} />
+          <Route exact path="/">
+            <Redirect to="/home" />
+          </Route>
         </IonRouterOutlet>
-        {/* @ts-ignore */}
         <IonTabBar slot="bottom">
-          {/* @ts-ignore */}
-          <Tab1 />
+          <IonTabButton tab="home" href="/home">
+            <IonIcon icon={homeOutline} />
+            <IonLabel>Accueil</IonLabel>
+          </IonTabButton>
         </IonTabBar>
       </IonTabs>
     </IonReactRouter>
