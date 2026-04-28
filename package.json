@@ -1,0 +1,28 @@
+{
+  "name": "arbregen",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "ionic:build": "react-scripts build",
+    "ionic:serve": "react-scripts start"
+  },
+  "dependencies": {
+    "@ionic/react": "^7.8.0",
+    "@ionic/react-router": "^7.8.0",
+    "ionicons": "^7.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router": "^5.3.4",
+    "react-router-dom": "^5.3.4",
+    "react-scripts": "5.0.1",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0"
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version"]
+  }
+}

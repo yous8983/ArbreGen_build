@@ -1,0 +1,13 @@
+:root { --ion-color-primary: #2563EB; --ion-color-primary-contrast: #ffffff; }
+body {
+  --mt-bg: #0f1923; --mt-surface: #1a2535; --mt-border: #2d3f5a;
+  --mt-text: #f1f5f9; --mt-text-2: #94a3b8; --mt-text-3: #64748b;
+  --ion-background-color: var(--mt-bg); --ion-text-color: var(--mt-text);
+  --ion-toolbar-background: var(--mt-surface); --ion-tab-bar-background: var(--mt-surface);
+  --ion-card-background: var(--mt-surface);
+  font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased;
+}
+ion-toolbar { --background: var(--mt-surface); --border-color: var(--mt-border); }
+ion-tab-bar { border-top: 1px solid var(--mt-border); }
+ion-tab-button { --color: var(--mt-text-3); --color-selected: #2563EB; }
+ion-card { box-shadow: none !important; border: 1px solid var(--mt-border); border-radius: 12px; }

@@ -1,0 +1,37 @@
+name: Build APK — ArbreGen
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install
+      - run: npm run build
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - run: yes | sdkmanager --licenses || true
+      - run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - run: npx cap add android
+      - run: npx cap sync android
+      - name: Copy icons
+        run: |
+          if [ -d "android-icons" ]; then
+            for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              [ -d "android-icons/mipmap-$d" ] || continue
+              mkdir -p android/app/src/main/res/mipmap-$d
+              cp android-icons/mipmap-$d/ic_launcher.png android/app/src/main/res/mipmap-$d/ 2>/dev/null || true
+              cp android-icons/mipmap-$d/ic_launcher_round.png android/app/src/main/res/mipmap-$d/ 2>/dev/null || true
+            done
+          fi
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ArbreGen-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

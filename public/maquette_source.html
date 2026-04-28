@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbre Généalogique Professionnel - Version Complète</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            opacity: 0.95;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 35px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #586069;
+            transition: all 0.3s;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #1e3c72;
+            border-bottom-color: #1e3c72;
+        }
+
+        .tab:hover {
+            color: #1e3c72;
+            background: #f6f8fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #24292e;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        #tree-container {
+            padding: 50px;
+            overflow-x: auto;
+            min-height: 500px;
+            background: #ffffff;
+        }
+
+        .tree {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .tree ul {
+            padding-top: 30px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tree li {
+            list-style-type: none;
+            position: relative;
+            padding: 30px 8px 0 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #cbd5e0;
+            width: 50%;
+            height: 30px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #cbd5e0;
+        }
+
+        .tree li:only-child::after,
+        .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        .tree li:first-child::before,
+        .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        .tree li:last-child::before {
+            border-right: 2px solid #cbd5e0;
+            border-radius: 0 8px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 8px 0 0 0;
+        }
+
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #cbd5e0;
+            width: 0;
+            height: 30px;
+        }
+
+        .couple-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .couple-line {
+            width: 40px;
+            height: 2px;
+            background: #cbd5e0;
+            position: relative;
+        }
+
+        .couple-line::after {
+            content: '♥';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #e74c3c;
+            font-size: 18px;
+        }
+
+        .member {
+            border: 2px solid #e1e4e8;
+            padding: 18px 22px;
+            border-radius: 12px;
+            display: inline-block;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            cursor: pointer;
+            min-width: 180px;
+            text-align: center;
+            position: relative;
+        }
+
+        .member:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .member.highlight {
+            border-color: #ffc107;
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+        }
+
+        .member-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .member.male .member-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .member.female .member-icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .member.male {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
+        }
+
+        .member.female {
+            border-color: #f5576c;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe8f0 100%);
+        }
+
+        .member-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: #24292e;
+        }
+
+        .member-info {
+            font-size: 13px;
+            color: #586069;
+            line-height: 1.6;
+        }
+
+        .member-relation {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e8edff;
+            color: #1e3c72;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .member.female .member-relation {
+            background: #ffe8f0;
+            color: #c2185b;
+        }
+
+        .action-btn {
+            position: absolute;
+            top: -8px;
+            background: white;
+            border: 2px solid;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .delete-btn {
+            right: -8px;
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .edit-btn {
+            right: 28px;
+            border-color: #ffc107;
+            color: #ffc107;
+        }
+
+        .edit-btn:hover {
+            background: #ffc107;
+            color: white;
+        }
+
+        .member:hover .action-btn {
+            display: flex;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 24px;
+            opacity: 0.4;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #24292e;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e4e8;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #586069;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #f6f8fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #24292e;
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .legend-icon.male {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .legend-icon.female {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #e8f4fd;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #24292e;
+        }
+
+        .modal-footer {
+            margin-top: 25px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            padding-left: 45px;
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #d1d5db;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #1e3c72;
+            color: #1e3c72;
+        }
+
+        .filter-btn.active {
+            background: #1e3c72;
+            color: white;
+            border-color: #1e3c72;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #24292e;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bar-label {
+            min-width: 120px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #586069;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            height: 30px;
+            background: #f6f8fa;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #586069;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1e3c72;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+        }
+
+        @media print {
+            .controls, .action-btn, header {
+                display: none !important;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            #tree-container {
+                padding: 20px;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Arbre Généalogique Professionnel</h1>
+            <p>Gestion complète et avancée de votre histoire familiale</p>
+        </header>
+
+        <div class="controls">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-members">0</div>
+                    <div class="stat-label">Membres Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-couples">0</div>
+                    <div class="stat-label">Couples</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-generations">0</div>
+                    <div class="stat-label">Générations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-male">0</div>
+                    <div class="stat-label">Hommes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-female">0</div>
+                    <div class="stat-label">Femmes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-age">0</div>
+                    <div class="stat-label">Âge Moyen</div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-icon male">♂</div>
+                    <span><strong>Homme</strong> - Bleu/Violet</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon female">♀</div>
+                    <span><strong>Femme</strong> - Rose/Rouge</span>
+                </div>
+                <div class="legend-item">
+                    <span style="color: #e74c3c; font-size: 18px;">♥</span>
+                    <span><strong>Union</strong> - Couple marié</span>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="add-member">➕ Ajouter</button>
+                <button class="tab" data-tab="add-couple">💑 Couples</button>
+                <button class="tab" data-tab="search">🔍 Rechercher</button>
+                <button class="tab" data-tab="statistics">📊 Statistiques</button>
+                <button class="tab" data-tab="export">📥 Export</button>
+                <button class="tab" data-tab="manage">⚙️ Gestion</button>
+            </div>
+
+            <div id="add-member" class="tab-content active">
+                <form id="member-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Prénom *</label>
+                            <input type="text" id="name" required placeholder="Ex: Marie">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastname">Nom de famille *</label>
+                            <input type="text" id="lastname" required placeholder="Ex: Dupont">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender">Sexe *</label>
+                            <select id="gender" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="male">Homme (♂)</option>
+                                <option value="female">Femme (♀)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="birth-year">Année de naissance</label>
+                            <input type="number" id="birth-year" min="1800" max="2024" placeholder="Ex: 1980">
+                        </div>
+                        <div class="form-group">
+                            <label for="birth-place">Lieu de naissance</label>
+                            <input type="text" id="birth-place" placeholder="Ex: Paris, France">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="parent">Parent (optionnel)</label>
+                        <select id="parent">
+                            <option value="">Racine de l'arbre (aucun parent)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="profession">Profession</label>
+                        <input type="text" id="profession" placeholder="Ex: Médecin">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes / Informations supplémentaires</label>
+                        <textarea id="notes" rows="3" placeholder="Ex: Événements importants, anecdotes..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">➕ Ajouter ce membre</button>
+                </form>
+            </div>
+
+            <div id="add-couple" class="tab-content">
+                <div class="alert alert-info">
+                    💡 Créez un lien de couple entre deux membres existants pour représenter une union maritale.
+                </div>
+                <form id="couple-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="spouse1">Premier conjoint *</label>
+                            <select id="spouse1" required>
+                                <option value="">Sélectionner...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="spouse2">Second conjoint *</label>
+                            <select id="spouse2" required>
+                                <option value="">Sélectionner...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="marriage-year">Année de mariage</label>
+                            <input type="number" id="marriage-year" min="1800" max="2024" placeholder="Ex: 2005">
+                        </div>
+                        <div class="form-group">
+                            <label for="marriage-place">Lieu de mariage</label>
+                            <input type="text" id="marriage-place" placeholder="Ex: Lyon, France">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💑 Créer le couple</button>
+                </form>
+            </div>
+
+            <div id="search" class="tab-content">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Rechercher un membre par nom, prénom, lieu...">
+                </div>
+                
+                <div class="filter-section">
+                    <span style="font-weight: 600; align-self: center;">Filtrer par:</span>
+                    <button class="filter-btn active" data-filter="all">Tous</button>
+                    <button class="filter-btn" data-filter="male">Hommes</button>
+                    <button class="filter-btn" data-filter="female">Femmes</button>
+                    <button class="filter-btn" data-filter="married">Mariés</button>
+                    <button class="filter-btn" data-filter="single">Célibataires</button>
+                </div>
+
+                <div id="search-results"></div>
+            </div>
+
+            <div id="statistics" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">📊 Répartition par génération</div>
+                    <div id="generation-chart" class="bar-chart"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📅 Répartition par décennie de naissance</div>
+                    <div id="decade-chart" class="bar-chart"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📍 Répartition géographique</div>
+                    <div id="location-chart" class="bar-chart"></div>
+                </div>
+            </div>
+
+            <div id="export" class="tab-content">
+                <div class="alert alert-success">
+                    ✅ Exportez votre arbre généalogique dans différents formats pour le partager ou l'archiver.
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-danger" onclick="tree.exportPDF()">📄 Exporter en PDF</button>
+                    <button class="btn btn-success" onclick="tree.exportImage()">🖼️ Exporter en Image (PNG)</button>
+                    <button class="btn btn-info" onclick="tree.exportJSON()">💾 Exporter en JSON</button>
+                    <button class="btn btn-warning" onclick="tree.exportCSV()">📊 Exporter en CSV</button>
+                </div>
+            </div>
+
+            <div id="manage" class="tab-content">
+                <div class="alert alert-warning">
+                    ⚠️ Les actions de gestion sont irréversibles. Assurez-vous d'exporter vos données avant de réinitialiser.
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="tree.importData()">📤 Importer des données JSON</button>
+                    <button class="btn btn-danger" onclick="tree.resetTree()">🗑️ Réinitialiser tout l'arbre</button>
+                    <button class="btn btn-info" onclick="tree.showStatsSummary()">📈 Résumé complet</button>
+                </div>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
+            </div>
+        </div>
+
+        <div id="tree-container">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <h2>Votre arbre est vide</h2>
+                <p>Commencez par ajouter le premier membre de votre famille</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Modifier le membre</h2>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-name">Prénom</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-lastname">Nom</label>
+                        <input type="text" id="edit-lastname" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-gender">Sexe</label>
+                        <select id="edit-gender" required>
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-birth-year">Année de naissance</label>
+                        <input type="number" id="edit-birth-year">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-birth-place">Lieu de naissance</label>
+                    <input type="text" id="edit-birth-place">
+                </div>
+                <div class="form-group">
+                    <label for="edit-profession">Profession</label>
+                    <input type="text" id="edit-profession">
+                </div>
+                <div class="form-group">
+                    <label for="edit-notes">Notes</label>
+                    <textarea id="edit-notes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="tree.closeEditModal()">Annuler</button>
+                    <button type="submit" class="btn">💾 Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        class FamilyTree {
+            constructor() {
+                this.members = [];
+                this.couples = [];
+                this.currentFilter = 'all';
+                this.loadFromStorage();
+                this.init();
+            }
+
+            init() {
+                this.form = document.getElementById('member-form');
+                this.coupleForm = document.getElementById('couple-form');
+                this.editForm = document.getElementById('edit-form');
+                this.treeContainer = document.getElementById('tree-container');
+                this.editModal = document.getElementById('edit-modal');
+                this.searchInput = document.getElementById('search-input');
+
+                this.form.addEventListener('submit', (e) => this.addMember(e));
+                this.coupleForm.addEventListener('submit', (e) => this.addCouple(e));
+                this.editForm.addEventListener('submit', (e) => this.updateMember(e));
+                this.searchInput.addEventListener('input', (e) => this.handleSearch(e));
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+                });
+
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.handleFilter(e.target.dataset.filter, e.target));
+                });
+
+                document.getElementById('import-file').addEventListener('change', (e) => this.handleImport(e));
+
+                this.render();
+            }
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+
+                if (tabName === 'statistics') {
+                    this.renderStatistics();
+                }
+            }
+
+            addMember(e) {
+                e.preventDefault();
+
+                const member = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('name').value.trim(),
+                    lastname: document.getElementById('lastname').value.trim(),
+                    gender: document.getElementById('gender').value,
+                    birthYear: document.getElementById('birth-year').value,
+                    birthPlace: document.getElementById('birth-place').value.trim(),
+                    profession: document.getElementById('profession').value.trim(),
+                    notes: document.getElementById('notes').value.trim(),
+                    parentId: document.getElementById('parent').value || null,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.members.push(member);
+                this.saveToStorage();
+                this.form.reset();
+                this.render();
+                
+                this.showNotification('✅ Membre ajouté avec succès !', 'success');
+            }
+
+            addCouple(e) {
+                e.preventDefault();
+
+                const spouse1Id = document.getElementById('spouse1').value;
+                const spouse2Id = document.getElementById('spouse2').value;
+
+                if (spouse1Id === spouse2Id) {
+                    this.showNotification('❌ Veuillez sélectionner deux personnes différentes.', 'error');
+                    return;
+                }
+
+                const exists = this.couples.some(c => 
+                    (c.spouse1 === spouse1Id && c.spouse2 === spouse2Id) ||
+                    (c.spouse1 === spouse2Id && c.spouse2 === spouse1Id)
+                );
+
+                if (exists) {
+                    this.showNotification('❌ Ce couple existe déjà.', 'error');
+                    return;
+                }
+
+                const couple = {
+                    id: Date.now().toString(),
+                    spouse1: spouse1Id,
+                    spouse2: spouse2Id,
+                    marriageYear: document.getElementById('marriage-year').value,
+                    marriagePlace: document.getElementById('marriage-place').value.trim()
+                };
+
+                this.couples.push(couple);
+                this.saveToStorage();
+                this.coupleForm.reset();
+                this.render();
+                
+                this.showNotification('✅ Couple créé avec succès !', 'success');
+            }
+
+            deleteMember(id) {
+                if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce membre et tous ses descendants ?')) {
+                    return;
+                }
+
+                const deleteRecursive = (memberId) => {
+                    const children = this.members.filter(m => m.parentId === memberId);
+                    children.forEach(child => deleteRecursive(child.id));
+                    this.members = this.members.filter(m => m.id !== memberId);
+                    this.couples = this.couples.filter(c => c.spouse1 !== memberId && c.spouse2 !== memberId);
+                };
+
+                deleteRecursive(id);
+                this.saveToStorage();
+                this.render();
+                this.showNotification('✅ Membre supprimé', 'success');
+            }
+
+            editMember(id) {
+                const member = this.members.find(m => m.id === id);
+                if (!member) return;
+
+                document.getElementById('edit-id').value = member.id;
+                document.getElementById('edit-name').value = member.name;
+                document.getElementById('edit-lastname').value = member.lastname;
+                document.getElementById('edit-gender').value = member.gender;
+                document.getElementById('edit-birth-year').value = member.birthYear || '';
+                document.getElementById('edit-birth-place').value = member.birthPlace || '';
+                document.getElementById('edit-profession').value = member.profession || '';
+                document.getElementById('edit-notes').value = member.notes || '';
+
+                this.editModal.classList.add('active');
+            }
+
+            updateMember(e) {
+                e.preventDefault();
+
+                const id = document.getElementById('edit-id').value;
+                const member = this.members.find(m => m.id === id);
+                
+                if (member) {
+                    member.name = document.getElementById('edit-name').value.trim();
+                    member.lastname = document.getElementById('edit-lastname').value.trim();
+                    member.gender = document.getElementById('edit-gender').value;
+                    member.birthYear = document.getElementById('edit-birth-year').value;
+                    member.birthPlace = document.getElementById('edit-birth-place').value.trim();
+                    member.profession = document.getElementById('edit-profession').value.trim();
+                    member.notes = document.getElementById('edit-notes').value.trim();
+
+                    this.saveToStorage();
+                    this.closeEditModal();
+                    this.render();
+                    
+                    this.showNotification('✅ Modifications enregistrées !', 'success');
+                }
+            }
+
+            closeEditModal() {
+                this.editModal.classList.remove('active');
+            }
+
+            handleSearch(e) {
+                const query = e.target.value.toLowerCase();
+                const results = this.members.filter(m => 
+                    m.name.toLowerCase().includes(query) ||
+                    m.lastname.toLowerCase().includes(query) ||
+                    (m.birthPlace && m.birthPlace.toLowerCase().includes(query)) ||
+                    (m.profession && m.profession.toLowerCase().includes(query))
+                );
+
+                this.displaySearchResults(results);
+            }
+
+            displaySearchResults(results) {
+                const container = document.getElementById('search-results');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 20px;">Aucun résultat trouvé</p>';
+                    return;
+                }
+
+                let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">';
+                results.forEach(member => {
+                    const spouse = this.getSpouse(member.id);
+                    const age = member.birthYear ? `${new Date().getFullYear() - member.birthYear} ans` : '';
+                    
+                    html += `
+                        <div class="stat-card" style="text-align: left; cursor: pointer;" onclick="tree.highlightMember('${member.id}')">
+                            <div style="font-size: 24px; margin-bottom: 8px;">${member.gender === 'male' ? '♂' : '♀'}</div>
+                            <div style="font-weight: 700; margin-bottom: 4px;">${member.name} ${member.lastname}</div>
+                            <div style="font-size: 13px; color: #586069;">
+                                ${member.birthYear ? `Né(e) en ${member.birthYear}` : ''}
+                                ${age ? ` (${age})` : ''}
+                                ${member.birthPlace ? `<br>📍 ${member.birthPlace}` : ''}
+                                ${member.profession ? `<br>💼 ${member.profession}` : ''}
+                                ${spouse ? `<br>💑 ${spouse.name} ${spouse.lastname}` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            highlightMember(id) {
+                document.querySelectorAll('.member').forEach(m => m.classList.remove('highlight'));
+                const memberEl = document.querySelector(`[data-id="${id}"]`);
+                if (memberEl) {
+                    memberEl.classList.add('highlight');
+                    memberEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => memberEl.classList.remove('highlight'), 3000);
+                }
+                this.switchTab('add-member'); // Retour à la vue de l'arbre
+            }
+
+            handleFilter(filter, btnElement) {
+                this.currentFilter = filter;
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+
+                let filtered = this.members;
+                if (filter === 'male') {
+                    filtered = this.members.filter(m => m.gender === 'male');
+                } else if (filter === 'female') {
+                    filtered = this.members.filter(m => m.gender === 'female');
+                } else if (filter === 'married') {
+                    filtered = this.members.filter(m => this.getSpouse(m.id));
+                } else if (filter === 'single') {
+                    filtered = this.members.filter(m => !this.getSpouse(m.id));
+                }
+
+                this.displaySearchResults(filtered);
+            }
+
+            getSpouse(memberId) {
+                const couple = this.couples.find(c => c.spouse1 === memberId || c.spouse2 === memberId);
+                if (!couple) return null;
+                
+                const spouseId = couple.spouse1 === memberId ? couple.spouse2 : couple.spouse1;
+                return this.members.find(m => m.id === spouseId);
+            }
+
+            buildTree(parentId = null) {
+                const children = this.members.filter(m => m.parentId === parentId);
+                
+                if (children.length === 0) {
+                    return '';
+                }
+
+                let html = '<ul>';
+                const processedChildren = new Set();
+                
+                children.forEach(member => {
+                    if (processedChildren.has(member.id)) return;
+                    
+                    const spouse = this.getSpouse(member.id);
+                    
+                    html += '<li>';
+                    
+                    if (spouse && children.includes(spouse)) {
+                        html += '<div class="couple-container">';
+                        html += this.renderMemberCard(member);
+                        html += '<div class="couple-line"></div>';
+                        html += this.renderMemberCard(spouse);
+                        html += '</div>';
+                        processedChildren.add(member.id);
+                        processedChildren.add(spouse.id);
+                    } else {
+                        html += this.renderMemberCard(member);
+                        processedChildren.add(member.id);
+                    }
+                    
+                    html += this.buildTree(member.id);
+                    html += '</li>';
+                });
+                
+                html += '</ul>';
+                return html;
+            }
+
+            renderMemberCard(member) {
+                const age = member.birthYear ? `${new Date().getFullYear() - member.birthYear} ans` : '';
+                const spouse = this.getSpouse(member.id);
+                const relationLabel = spouse ? (member.gender === 'male' ? 'Époux' : 'Épouse') : '';
+                
+                return `
+                    <div class="member ${member.gender}" data-id="${member.id}">
+                        <button class="action-btn delete-btn" onclick="tree.deleteMember('${member.id}')">×</button>
+                        <button class="action-btn edit-btn" onclick="tree.editMember('${member.id}')">✎</button>
+                        <div class="member-icon">${member.gender === 'male' ? '♂' : '♀'}</div>
+                        <div class="member-name">${member.name} ${member.lastname}</div>
+                        <div class="member-info">
+                            ${member.birthYear ? `Né(e) en ${member.birthYear}` : ''}
+                            ${member.birthYear && age ? `<br>${age}` : ''}
+                            ${member.birthPlace ? `<br>📍 ${member.birthPlace}` : ''}
+                            ${member.profession ? `<br>💼 ${member.profession}` : ''}
+                        </div>
+                        ${relationLabel ? `<div class="member-relation">${relationLabel}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            renderStatistics() {
+                // Génération
+                const generationData = {};
+                const calculateGeneration = (memberId, gen = 0) => {
+                    const member = this.members.find(m => m.id === memberId);
+                    if (!member) return;
+                    
+                    generationData[gen] = (generationData[gen] || 0) + 1;
+                    
+                    const children = this.members.filter(m => m.parentId === memberId);
+                    children.forEach(child => calculateGeneration(child.id, gen + 1));
+                };
+                
+                this.members.filter(m => !m.parentId).forEach(root => calculateGeneration(root.id, 0));
+                this.renderBarChart('generation-chart', generationData, 'Génération');
+
+                // Décennie
+                const decadeData = {};
+                this.members.forEach(m => {
+                    if (m.birthYear) {
+                        const decade = Math.floor(m.birthYear / 10) * 10;
+                        decadeData[`${decade}s`] = (decadeData[`${decade}s`] || 0) + 1;
+                    }
+                });
+                this.renderBarChart('decade-chart', decadeData, 'Décennie');
+
+                // Lieu
+                const locationData = {};
+                this.members.forEach(m => {
+                    if (m.birthPlace) {
+                        locationData[m.birthPlace] = (locationData[m.birthPlace] || 0) + 1;
+                    }
+                });
+                this.renderBarChart('location-chart', locationData, 'Lieu');
+            }
+
+            renderBarChart(containerId, data, label) {
+                const container = document.getElementById(containerId);
+                const maxValue = Math.max(...Object.values(data), 1);
+                
+                let html = '';
+                Object.entries(data).sort((a, b) => b[1] - a[1]).forEach(([key, value]) => {
+                    const percentage = (value / maxValue) * 100;
+                    html += `
+                        <div class="bar-item">
+                            <div class="bar-label">${key}</div>
+                            <div class="bar-wrapper">
+                                <div class="bar-fill" style="width: ${percentage}%">${value}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html || '<p style="text-align: center; color: #6c757d;">Aucune donnée disponible</p>';
+            }
+
+            updateStats() {
+                const total = this.members.length;
+                const males = this.members.filter(m => m.gender === 'male').length;
+                const females = this.members.filter(m => m.gender === 'female').length;
+                
+                let maxDepth = 0;
+                const calculateDepth = (parentId, depth = 0) => {
+                    const children = this.members.filter(m => m.parentId === parentId);
+                    if (children.length === 0) {
+                        maxDepth = Math.max(maxDepth, depth);
+                        return;
+                    }
+                    children.forEach(child => calculateDepth(child.id, depth + 1));
+                };
+                this.members.filter(m => m.parentId === null).forEach(root => calculateDepth(root.id, 1));
+
+                const ages = this.members
+                    .filter(m => m.birthYear)
+                    .map(m => new Date().getFullYear() - parseInt(m.birthYear));
+                const avgAge = ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0;
+
+                document.getElementById('total-members').textContent = total;
+                document.getElementById('total-couples').textContent = this.couples.length;
+                document.getElementById('total-generations').textContent = total > 0 ? maxDepth : 0;
+                document.getElementById('total-male').textContent = males;
+                document.getElementById('total-female').textContent = females;
+                document.getElementById('avg-age').textContent = avgAge;
+            }
+
+            updateSelects() {
+                const parentSelect = document.getElementById('parent');
+                parentSelect.innerHTML = '<option value="">Racine de l\'arbre (aucun parent)</option>';
+                
+                this.members.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    option.textContent = `${member.name} ${member.lastname}`;
+                    parentSelect.appendChild(option);
+                });
+
+                ['spouse1', 'spouse2'].forEach(id => {
+                    const select = document.getElementById(id);
+                    select.innerHTML = '<option value="">Sélectionner...</option>';
+                    
+                    this.members.forEach(member => {
+                        const option = document.createElement('option');
+                        option.value = member.id;
+                        option.textContent = `${member.name} ${member.lastname} (${member.gender === 'male' ? '♂' : '♀'})`;
+                        select.appendChild(option);
+                    });
+                });
+            }
+
+            render() {
+                this.updateSelects();
+                this.updateStats();
+
+                if (this.members.length === 0) {
+                    this.treeContainer.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <h2>Votre arbre est vide</h2>
+                            <p>Commencez par ajouter le premier membre de votre famille</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const treeHTML = `<div class="tree">${this.buildTree(null)}</div>`;
+                this.treeContainer.innerHTML = treeHTML;
+            }
+
+            async exportPDF() {
+                this.showNotification('📄 Génération du PDF en cours...', 'info');
+                
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const treeElement = document.getElementById('tree-container');
+                    
+                    // Capturer l'arbre en image avec html2canvas
+                    const canvas = await html2canvas(treeElement, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+                    
+                    // Créer le PDF en format paysage si l'arbre est large
+                    const orientation = imgWidth > imgHeight ? 'landscape' : 'portrait';
+                    const pdf = new jsPDF(orientation, 'mm', 'a4');
+                    
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    
+                    // Calculer les dimensions pour adapter l'image
+                    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+                    const width = imgWidth * ratio;
+                    const height = imgHeight * ratio;
+                    
+                    // Centrer l'image
+                    const x = (pdfWidth - width) / 2;
+                    const y = (pdfHeight - height) / 2;
+                    
+                    // Ajouter l'image au PDF
+                    pdf.addImage(imgData, 'PNG', x, y, width, height);
+                    
+                    // Ajouter une page avec les statistiques
+                    pdf.addPage();
+                    pdf.setFontSize(20);
+                    pdf.text('Statistiques de l\'arbre généalogique', 20, 20);
+                    
+                    pdf.setFontSize(12);
+                    let yPos = 40;
+                    pdf.text(`Nombre total de membres: ${this.members.length}`, 20, yPos);
+                    yPos += 10;
+                    pdf.text(`Nombre de couples: ${this.couples.length}`, 20, yPos);
+                    yPos += 10;
+                    pdf.text(`Hommes: ${this.members.filter(m => m.gender === 'male').length}`, 20, yPos);
+                    yPos += 10;
+                    pdf.text(`Femmes: ${this.members.filter(m => m.gender === 'female').length}`, 20, yPos);
+                    yPos += 20;
+                    
+                    pdf.text('Liste des membres:', 20, yPos);
+                    yPos += 10;
+                    
+                    this.members.forEach((member, index) => {
+                        if (yPos > 270) {
+                            pdf.addPage();
+                            yPos = 20;
+                        }
+                        const info = `${index + 1}. ${member.name} ${member.lastname} (${member.gender === 'male' ? 'H' : 'F'})`;
+                        pdf.text(info, 25, yPos);
+                        yPos += 7;
+                    });
+                    
+                    // Sauvegarder
+                    pdf.save(`arbre-genealogique-${Date.now()}.pdf`);
+                    this.showNotification('✅ PDF exporté avec succès !', 'success');
+                } catch (error) {
+                    console.error('Erreur lors de l\'export PDF:', error);
+                    this.showNotification('❌ Erreur lors de l\'export PDF', 'error');
+                }
+            }
+
+            async exportImage() {
+                this.showNotification('🖼️ Génération de l\'image en cours...', 'info');
+                
+                try {
+                    const treeElement = document.getElementById('tree-container');
+                    const canvas = await html2canvas(treeElement, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+                    
+                    canvas.toBlob(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `arbre-genealogique-${Date.now()}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        this.showNotification('✅ Image exportée avec succès !', 'success');
+                    });
+                } catch (error) {
+                    console.error('Erreur lors de l\'export image:', error);
+                    this.showNotification('❌ Erreur lors de l\'export image', 'error');
+                }
+            }
+
+            exportJSON() {
+                const data = {
+                    members: this.members,
+                    couples: this.couples,
+                    exportDate: new Date().toISOString(),
+                    version: '2.0'
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `arbre-genealogique-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showNotification('✅ Données JSON exportées !', 'success');
+            }
+
+            exportCSV() {
+                let csv = 'Prénom,Nom,Sexe,Année de naissance,Lieu de naissance,Profession,Marié(e)\n';
+                
+                this.members.forEach(member => {
+                    const spouse = this.getSpouse(member.id);
+                    const row = [
+                        member.name,
+                        member.lastname,
+                        member.gender === 'male' ? 'Homme' : 'Femme',
+                        member.birthYear || '',
+                        member.birthPlace || '',
+                        member.profession || '',
+                        spouse ? 'Oui' : 'Non'
+                    ].map(field => `"${field}"`).join(',');
+                    csv += row + '\n';
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `arbre-genealogique-${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showNotification('✅ CSV exporté avec succès !', 'success');
+            }
+
+            importData() {
+                document.getElementById('import-file').click();
+            }
+
+            handleImport(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        if (data.members && Array.isArray(data.members)) {
+                            if (confirm('⚠️ L\'import écrasera les données actuelles. Continuer ?')) {
+                                this.members = data.members;
+                                this.couples = data.couples || [];
+                                this.saveToStorage();
+                                this.render();
+                                this.showNotification('✅ Données importées avec succès !', 'success');
+                            }
+                        } else {
+                            this.showNotification('❌ Fichier invalide', 'error');
+                        }
+                    } catch (err) {
+                        this.showNotification('❌ Erreur : ' + err.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            }
+
+            resetTree() {
+                if (!confirm('⚠️ Êtes-vous sûr de vouloir réinitialiser tout l\'arbre ? Cette action est irréversible.')) {
+                    return;
+                }
+                this.members = [];
+                this.couples = [];
+                this.saveToStorage();
+                this.render();
+                this.showNotification('🗑️ Arbre réinitialisé', 'success');
+            }
+
+            showStatsSummary() {
+                const summary = `
+📊 RÉSUMÉ COMPLET DE L'ARBRE GÉNÉALOGIQUE
+
+Membres: ${this.members.length}
+Couples: ${this.couples.length}
+Hommes: ${this.members.filter(m => m.gender === 'male').length}
+Femmes: ${this.members.filter(m => m.gender === 'female').length}
+
+Membres mariés: ${this.members.filter(m => this.getSpouse(m.id)).length}
+Membres célibataires: ${this.members.filter(m => !this.getSpouse(m.id)).length}
+
+Plus jeune: ${this.members.filter(m => m.birthYear).sort((a, b) => b.birthYear - a.birthYear)[0]?.name || 'N/A'}
+Plus âgé: ${this.members.filter(m => m.birthYear).sort((a, b) => a.birthYear - b.birthYear)[0]?.name || 'N/A'}
+                `;
+                alert(summary);
+            }
+
+            showNotification(message, type = 'info') {
+                // Simple notification via alert pour l'instant
+                alert(message);
+            }
+
+            saveToStorage() {
+                localStorage.setItem('familyTreePro', JSON.stringify({
+                    members: this.members,
+                    couples: this.couples
+                }));
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('familyTreePro');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.members = data.members || [];
+                    this.couples = data.couples || [];
+                }
+            }
+        }
+
+        const tree = new FamilyTree();
+
+        document.getElementById('edit-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'edit-modal') {
+                tree.closeEditModal();
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (tree.members.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
